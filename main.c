@@ -16,9 +16,20 @@ typedef struct node
 
 typedef struct column
 {
-    char name[2];
-    node head;
+    char name[3];
+    node *head;
 } column;
+
+typedef struct table
+{
+    column col1;
+    column col2;
+    column col3;
+    column col4;
+    column col5;
+    column col6;
+    column col7;
+} table;
 
 char findSuit(int i)
 {
@@ -39,6 +50,7 @@ char findSuit(int i)
         return 'S';
     }
 
+    // Used to check for errors
     return -1;
 }
 
@@ -69,6 +81,7 @@ char findCardNo(int i)
         return '0' + i;
     }
 
+    // Used to check for errors
     return -1;
 }
 
@@ -197,6 +210,17 @@ card *checkForMissingCards(node *head)
     return NULL;
 }
 
+// Finds the last node in a linked list
+node *findLastNode(node *head)
+{
+    node *curr = head;
+    while (curr->next != NULL)
+    {
+        curr = curr->next;
+    }
+    return head;
+}
+
 // Check if all cards have valid number and suit
 int checkValidityOfCards(node *head)
 {
@@ -218,6 +242,7 @@ int checkValidityOfCards(node *head)
             }
         }
 
+        // Returns line of first occuring error
         return line;
 
     found:
@@ -287,7 +312,7 @@ node *getCards(char *filename)
     if (dub != 0)
     {
         printf("%s%d", "Duplicate found on line: ", dub);
-        goto toilet;
+        goto error;
     }
 
     card *mis = checkForMissingCards(head);
@@ -295,33 +320,88 @@ node *getCards(char *filename)
     {
         printf("%s%c%c", "Missing card in file: ", mis->num, mis->suit);
         free(mis);
-        goto toilet;
+        goto error;
     }
 
     int valid = checkValidityOfCards(head);
     if (valid != 0)
     {
         printf("%s%d", "Invalid card on line: ", valid);
-        goto toilet;
+        goto error;
     }
 
     return head;
 // Return line with error if there is an error
-toilet:
+error:
     return NULL;
 }
 
-void divideCards(node *head)
+void printEmptyTable()
 {
+    // HEADER
+    int i = 0;
+    int j = 0;
+    int k = 1;
+    for (int i = 0; i < 50; i++)
+    {
+        if (i % 7 == 0)
+        {
+            j++;
+            if (j % 2 == 0)
+            {
+                printf("\t%s\t%c%d", "[]", 'F', k);
+                k++;
+            }
+            printf("\n");
+        }
+        printf(" \t");
+    }
 }
 
-// showAll 0 = true, 1 = false,  Do later -> (2 = show face up cards)
-void printTable(int showAll)
+void printHeader()
 {
+    printf("\n");
+    printf("C1\tC2\tC3\tC4\tC5\tC6\tC7");
+    printf("\n");
+}
 
-    for (int i = 0; i < 10; i++)
+void printFooter(char *lastInput[], char *message[])
+{
+    printf("\n\n");
+    printf("LAST Command: %s\n", lastInput);
+    printf("Message: %s\n", message);
+    printf("INPUT > ");
+}
+
+void printDeck(node *n)
+{
+    // HEADER
+    printHeader();
+
+    // BOARD
+    int i = 0;
+    int j = 0;
+    int k = 1;
+    node *current = n;
+    while (current != NULL)
     {
+        if (i % 7 == 0)
+        {
+            j++;
+            if (j % 2 == 0)
+            {
+                printf("\t%s\t%c%d", "[]", 'F', k);
+                k++;
+            }
+            printf("\n");
+        }
+        printf("%c%c\t", current->card.num, current->card.suit);
+
+        i++;
+        current = current->next;
     }
+
+    printFooter(NULL, NULL);
 }
 
 void playGame(node *head)
@@ -329,18 +409,52 @@ void playGame(node *head)
     node *cards;
     char lastCommand[2];
     char message[100];
-    char input = "input";
-
-    printf("%s", input);
 }
 
+// https://stackoverflow.com/questions/30678905/what-is-the-proper-equivalent-of-whiletrue-in-plain-c
+#define EVER \
+    ;        \
+    ;
 int main()
 {
+
+    char *lastInput = "";
+    char *message = "";
+
+    // First prompt
+    printHeader();
+    printEmptyTable();
+    printFooter(lastInput, message);
+    char input[3];
+    scanf("%s", input);
+    lastInput = input;
+
+    // Funny bit of code - equivalent of while(true)
+    for (EVER)
+    {
+        node *cards;
+        if (strcmp(input, "ld") == 0)
+        {
+            cards = getCards("");
+        }
+        printHeader();
+        if (cards != NULL)
+        {
+            printDeck(cards);
+        }
+        else
+        {
+            printEmptyTable();
+        }
+        printFooter(lastInput, message);
+
+        scanf("%s", input);
+    }
+
     char *ch = "\0";
-    getCards("");
 
-    getCards("cards.txt");
-
+    node *cards = getCards("");
+    printDeck(cards);
     // playGame(head);
     return 0;
 }
