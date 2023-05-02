@@ -10,6 +10,7 @@ AC
 TC
 JC
 QC
+KC
 AD
 2D
 3D
@@ -43,7 +44,6 @@ AS
 6S
 7S
 8S
-3C
 9S
 TS
 JS

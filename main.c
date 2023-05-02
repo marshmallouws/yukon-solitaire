@@ -20,17 +20,6 @@ typedef struct column
     node *head;
 } column;
 
-typedef struct table
-{
-    column col1;
-    column col2;
-    column col3;
-    column col4;
-    column col5;
-    column col6;
-    column col7;
-} table;
-
 char findSuit(int i)
 {
     if (i == 1)
@@ -104,42 +93,25 @@ node *initializeCards()
 
             if (head == NULL)
             {
-                // Allocate memory
+                // Allocate memory to keep the head variable outside scope
                 head = (struct node *)malloc(sizeof(struct node));
                 head->card.num = num;
                 head->card.suit = suit;
                 head->next = NULL;
+                last = head;
             }
             else
             {
-                // Find next node
-                node *curr = head;
-                while (curr->next != NULL)
-                {
-                    curr = curr->next;
-                }
-
                 // Allocate memory
-                curr->next = (struct node *)malloc(sizeof(struct node));
-                curr->next->card.num = num;
-                curr->next->card.suit = suit;
-                curr->next->next = NULL;
+                last->next = (struct node *)malloc(sizeof(struct node));
+                last->next->card.num = num;
+                last->next->card.suit = suit;
+                last->next->next = NULL;
+                last = last->next;
             }
         }
     }
     return head;
-}
-
-// Print all cards
-void printCards(node *node)
-{
-    int i = 1;
-    while (node != NULL)
-    {
-        printf("%d%c%c%c\n", i, ':', node->card.num, node->card.suit);
-        node = node->next;
-        i++;
-    }
 }
 
 // Check if loaded cards contains dublicates
@@ -174,7 +146,7 @@ card *checkForMissingCards(node *head)
     int i;
     int j;
 
-    // Checking if each card exists in linked list
+    // Checking for each card if it exists in file
     for (i = 1; i <= 4; i++)
     {
         for (j = 1; j <= 13; j++)
@@ -189,36 +161,24 @@ card *checkForMissingCards(node *head)
                 if (node->card.num == num && node->card.suit == suit)
                 {
                     found = 1;
-                    break;
+                    break; // Found specific card, break to movo onto next card
                 }
                 node = node->next;
             }
 
+            // Card is not found in file
             if (found == 0)
             {
-                card *missing;
+                card *missing = (struct node *)malloc(sizeof(struct node));
                 missing->num = num;
                 missing->suit = suit;
                 return missing;
             }
-            j++;
         }
-        i++;
     }
 
     // All cards are found
     return NULL;
-}
-
-// Finds the last node in a linked list
-node *findLastNode(node *head)
-{
-    node *curr = head;
-    while (curr->next != NULL)
-    {
-        curr = curr->next;
-    }
-    return head;
 }
 
 // Check if all cards have valid number and suit
@@ -256,39 +216,36 @@ int checkValidityOfCards(node *head)
 node *readFromFile(FILE *fptr)
 {
     node *head = NULL;
+    node *current = NULL;
     // Load content into line
     char line[500]; // Need to contain full file
 
     while ((fgets(line, sizeof(2), fptr)))
     {
+
         if (head == NULL)
         {
             head = (struct node *)malloc(sizeof(struct node));
             head->card.num = line[0];
             head->card.suit = line[1];
             head->next = NULL;
+            current = head;
         }
         else
         {
-            // Find next node
-            node *curr = head;
-            while (curr->next != NULL)
-            {
-                curr = curr->next;
-            }
-
             // Allocate memory
-            curr->next = (struct node *)malloc(sizeof(struct node));
-            curr->next->card.num = line[0];
-            curr->next->card.suit = line[1];
-            curr->next->next = NULL;
+            current->next = (struct node *)malloc(sizeof(struct node));
+            current->next->card.num = line[0];
+            current->next->card.suit = line[1];
+            current->next->next = NULL;
+            current = current->next;
         }
     }
     return head;
 }
 
 // Get cards from specified source
-node *getCards(char *filename)
+node *getCards(char *filename, char *message)
 {
     // If no filname
     if (strlen(filename) == 0)
@@ -311,14 +268,14 @@ node *getCards(char *filename)
     int dub = checkDuplicates(head);
     if (dub != 0)
     {
-        printf("%s%d", "Duplicate found on line: ", dub);
+        sprintf(message, "%s%d%s%s", "Duplicate on line: ", dub, " in file ", filename);
         goto error;
     }
 
     card *mis = checkForMissingCards(head);
     if (mis != NULL)
     {
-        printf("%s%c%c", "Missing card in file: ", mis->num, mis->suit);
+        sprintf(message, "%s%c%c%s%s", "Following card is missing: ", mis->num, mis->suit, " in file: ", filename);
         free(mis);
         goto error;
     }
@@ -369,15 +326,12 @@ void printFooter(char *lastInput[], char *message[])
 {
     printf("\n\n");
     printf("LAST Command: %s\n", lastInput);
-    printf("Message: %s\n", message);
+    printf("%s%s\n", "Message: ", message);
     printf("INPUT > ");
 }
 
 void printDeck(node *n)
 {
-    // HEADER
-    printHeader();
-
     // BOARD
     int i = 0;
     int j = 0;
@@ -400,8 +354,6 @@ void printDeck(node *n)
         i++;
         current = current->next;
     }
-
-    printFooter(NULL, NULL);
 }
 
 void playGame(node *head)
@@ -419,7 +371,7 @@ int main()
 {
 
     char *lastInput = "";
-    char *message = "";
+    char *message = (char *)malloc(256);
 
     // First prompt
     printHeader();
@@ -435,12 +387,13 @@ int main()
         node *cards;
         if (strcmp(input, "ld") == 0)
         {
-            cards = getCards("");
+            cards = getCards("cards.txt", message);
         }
         printHeader();
         if (cards != NULL)
         {
             printDeck(cards);
+            message = "Ok";
         }
         else
         {
@@ -450,11 +403,5 @@ int main()
 
         scanf("%s", input);
     }
-
-    char *ch = "\0";
-
-    node *cards = getCards("");
-    printDeck(cards);
-    // playGame(head);
     return 0;
 }
