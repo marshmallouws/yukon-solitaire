@@ -389,11 +389,37 @@ void printDeck(node *head, int showCards)
     }
 }
 
-void randomInsertNode(node *deck, int numberOfNodes)
+/// @brief helper method for randomShuffleCards
+/// @param shuffledDeck the new deck with shuffled cards
+/// @param card the card to add to shuffledDeck
+/// @param numberOfNodes number of nodes in shuffledDeck
+/// @return
+node *randomInsertNode(node *shuffledDeck, node *card, int numberOfNodes)
 {
-    int nodePos = (rand() % numberOfNodes) + 1; // Find random node position
+    int nodePos = (rand() % (numberOfNodes + 1)); // Find random position to the new card
+    node *current = shuffledDeck;
+    node *next;
+    node *newCard = card;
 
-    int placeAfter = (rand() % 2); // 0 false, 1 true whether it should be placed after the node
+    // Add the node as the first card
+    if (nodePos == 0)
+    {
+        newCard->next = shuffledDeck;
+        return newCard;
+    }
+
+    for (int i = 0; i <= numberOfNodes; i++)
+    {
+        if (i + 1 == nodePos)
+        {
+
+            next = current->next;
+            current->next = newCard;
+            newCard->next = next;
+            return shuffledDeck;
+        }
+        current = current->next;
+    }
 }
 
 // Not too pretty, but works
@@ -503,19 +529,23 @@ node *splitShuffleCards(node *head, int split)
 
 node *randomShuffleCards(node *head)
 {
-    node *newHead = NULL;
-    node *tmp = head;
-    int i = 0; // Number of nodes in shuffled deck
+    node *shuffledDeck = NULL;
+
+    // Add first card
+    shuffledDeck = head;
+    head = head->next;
+    shuffledDeck->next = NULL;
+
+    int numberOfCards = 1; // Number of nodes in shuffled deck
+
     while (head != NULL)
     {
-        if (i == 0)
-        {
-            newHead = tmp;
-            newHead->next = NULL;
-        }
-
-        i++;
+        node *card = head;
+        head = head->next;
+        shuffledDeck = randomInsertNode(shuffledDeck, card, numberOfCards);
+        numberOfCards++;
     }
+    return shuffledDeck;
 }
 
 void playGame(node *head)
@@ -589,6 +619,7 @@ int main()
 
     getInput(input, command, arg, sizeof(input));
     lastCommand = command;
+    int showCards = 0;
 
     node *cards = NULL;
     // Funny bit of code - equivalent of while(true)
@@ -598,7 +629,7 @@ int main()
         {
             cards = getCards(arg, message);
         }
-        else if (strcmp(command, "sw") == 0)
+        else if (strcmp(command, "si") == 0)
         {
             if (cards != NULL)
             {
@@ -612,13 +643,21 @@ int main()
                 message = "No cards loaded";
             }
         }
-        else if (strcmp(command, "si") == 0)
+        else if (strcmp(command, "sw") == 0)
         {
-            // Not implemented
+            showCards = 1;
         }
         else if (strcmp(command, "sr") == 0)
         {
-            // Not implemented
+            if (cards != NULL)
+            {
+                cards = randomShuffleCards(cards);
+                message = "OK";
+            }
+            else
+            {
+                message = "No cards loaded";
+            }
         }
         else if (strcmp(command, "sd") == 0)
         {
@@ -638,6 +677,7 @@ int main()
 
         printBoard(cards, lastCommand, message, 1);
         getInput(input, command, arg, sizeof(input));
+        showCards = 0;
     }
     return 0;
 }
