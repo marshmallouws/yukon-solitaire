@@ -265,6 +265,31 @@ node *readFromFile(FILE *fptr)
     return head;
 }
 
+void saveToFile(node *head, char *filename)
+{
+    if (strcmp(filename, "") == 0)
+    {
+        filename = "cards.txt";
+    }
+
+    FILE *fptr = fopen(filename, "w");
+
+    while (head != NULL)
+    {
+        if (head->next == NULL)
+        {
+            fprintf(fptr, "%c%c", head->card.num, head->card.suit);
+        }
+        else
+        {
+            fprintf(fptr, "%c%c\n", head->card.num, head->card.suit);
+        }
+        head = head->next;
+    }
+
+    fclose(fptr);
+}
+
 // Get cards from specified source
 node *getCards(char *filename, char *message)
 {
@@ -389,39 +414,6 @@ void printDeck(node *head, int showCards)
     }
 }
 
-/// @brief helper method for randomShuffleCards
-/// @param shuffledDeck the new deck with shuffled cards
-/// @param card the card to add to shuffledDeck
-/// @param numberOfNodes number of nodes in shuffledDeck
-/// @return
-node *randomInsertNode(node *shuffledDeck, node *card, int numberOfNodes)
-{
-    int nodePos = (rand() % (numberOfNodes + 1)); // Find random position to the new card
-    node *current = shuffledDeck;
-    node *next;
-    node *newCard = card;
-
-    // Add the node as the first card
-    if (nodePos == 0)
-    {
-        newCard->next = shuffledDeck;
-        return newCard;
-    }
-
-    for (int i = 0; i <= numberOfNodes; i++)
-    {
-        if (i + 1 == nodePos)
-        {
-
-            next = current->next;
-            current->next = newCard;
-            newCard->next = next;
-            return shuffledDeck;
-        }
-        current = current->next;
-    }
-}
-
 // Not too pretty, but works
 node *splitShuffleCards(node *head, int split)
 {
@@ -527,6 +519,39 @@ node *splitShuffleCards(node *head, int split)
     return stack3;
 }
 
+/// @brief helper method for randomShuffleCards
+/// @param shuffledDeck the new deck with shuffled cards
+/// @param card the card to add to shuffledDeck
+/// @param numberOfNodes number of nodes in shuffledDeck
+/// @return
+node *randomInsertNode(node *shuffledDeck, node *card, int numberOfNodes)
+{
+    int nodePos = (rand() % (numberOfNodes + 1)); // Find random position to the new card
+    node *current = shuffledDeck;
+    node *next;
+    node *newCard = card;
+
+    // Add the node as the first card
+    if (nodePos == 0)
+    {
+        newCard->next = shuffledDeck;
+        return newCard;
+    }
+
+    for (int i = 0; i <= numberOfNodes; i++)
+    {
+        if (i + 1 == nodePos)
+        {
+
+            next = current->next;
+            current->next = newCard;
+            newCard->next = next;
+            return shuffledDeck;
+        }
+        current = current->next;
+    }
+}
+
 node *randomShuffleCards(node *head)
 {
     node *shuffledDeck = NULL;
@@ -604,7 +629,7 @@ void printBoard(node *cards, char *lastCommand, char *message, int showCards)
 int main()
 {
     // Seed for random function
-    srand(time(NULL));
+    srand(time(NULL)); // Used for seeding rand()
     char *lastCommand = "";
     char *message = (char *)malloc(256);
     sprintf(message, "");
@@ -661,7 +686,7 @@ int main()
         }
         else if (strcmp(command, "sd") == 0)
         {
-            // Not implemented
+            saveToFile(cards, arg);
         }
         else if (strcmp(command, "qq") == 0)
         {
