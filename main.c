@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct card
 {
@@ -93,7 +93,7 @@ node *initializeCards()
 
             if (head == NULL)
             {
-                // Allocate memory to keep the head variable outside scope
+                // Allocate memory with malloc to ensure that head is not overwritten
                 head = (struct node *)malloc(sizeof(struct node));
                 head->card.num = num;
                 head->card.suit = suit;
@@ -212,6 +212,27 @@ int checkValidityOfCards(node *head)
     return 0;
 }
 
+node *findLastCard(node *head)
+{
+    node *tmp = head;
+    while (tmp->next != NULL)
+    {
+        tmp = tmp->next;
+    }
+    return tmp;
+}
+
+// Helper function to shuffle
+node *findSecondLast(node *head)
+{
+    node *tmp = head;
+    while (tmp->next->next != NULL)
+    {
+        tmp = tmp->next;
+    }
+    return tmp;
+}
+
 // Reads a deck of cards from the specified file
 node *readFromFile(FILE *fptr)
 {
@@ -248,7 +269,7 @@ node *readFromFile(FILE *fptr)
 node *getCards(char *filename, char *message)
 {
     // If no filname
-    if (strlen(filename) == 0)
+    if (strcmp(filename, "") == 0)
     {
         // Create new deck of cards
         return initializeCards();
@@ -287,6 +308,7 @@ node *getCards(char *filename, char *message)
         goto error;
     }
 
+    sprintf(message, "OK");
     return head;
 // Return line with error if there is an error
 error:
@@ -317,26 +339,29 @@ void printEmptyTable()
 
 void printHeader()
 {
-    printf("\n");
+    printf("\n\n");
     printf("C1\tC2\tC3\tC4\tC5\tC6\tC7");
     printf("\n");
 }
 
-void printFooter(char *lastInput[], char *message[])
+void printFooter(char *lastInput, char *message)
 {
     printf("\n\n");
     printf("LAST Command: %s\n", lastInput);
-    printf("%s%s\n", "Message: ", message);
+    printf("Message: %s\n", message);
     printf("INPUT > ");
 }
 
-void printDeck(node *n)
+/// @brief
+/// @param head
+/// @param showCards 0 false, 1 true
+void printDeck(node *head, int showCards)
 {
     // BOARD
     int i = 0;
     int j = 0;
     int k = 1;
-    node *current = n;
+    node *current = head;
     while (current != NULL)
     {
         if (i % 7 == 0)
@@ -349,10 +374,147 @@ void printDeck(node *n)
             }
             printf("\n");
         }
-        printf("%c%c\t", current->card.num, current->card.suit);
+
+        if (showCards == 0)
+        {
+            printf("%s\t", "[]");
+        }
+        else
+        {
+            printf("%c%c\t", current->card.num, current->card.suit);
+        }
 
         i++;
         current = current->next;
+    }
+}
+
+void randomInsertNode(node *deck, int numberOfNodes)
+{
+    int nodePos = (rand() % numberOfNodes) + 1; // Find random node position
+
+    int placeAfter = (rand() % 2); // 0 false, 1 true whether it should be placed after the node
+}
+
+// Not too pretty, but works
+node *splitShuffleCards(node *head, int split)
+{
+    // Random split
+    if (split == 0)
+    {
+        split = (rand() % 51) + 1;
+    }
+
+    node *stack1;
+    node *stack2;
+    node *stack3 = NULL;
+
+    node *tmp = head;
+    // Find last node before split
+    for (int i = 0; i < split - 1; i++)
+    {
+        tmp = tmp->next;
+    }
+    stack2 = tmp->next;
+    tmp->next = NULL;
+    stack1 = head;
+
+    for (int i = 0; i < 52; i++)
+    {
+        if (stack1->next == NULL)
+        {
+            if (stack3 == NULL)
+            {
+                stack3 = stack1;
+            }
+            else
+            {
+                tmp = findLastCard(stack3);
+                tmp->next = stack1;
+            }
+            stack1->next = stack2;
+            break;
+        }
+
+        if (stack2->next == NULL)
+        {
+            if (stack3 == NULL)
+            {
+                stack3 = stack2;
+            }
+            else
+            {
+                tmp = findLastCard(stack3);
+                tmp->next = stack2;
+            }
+            stack2->next = stack1;
+            break;
+        }
+
+        // First card
+        if (i == 0)
+        {
+            tmp = findSecondLast(stack2);
+            if (tmp->next == NULL)
+            {
+                stack3 = tmp;
+            }
+            else
+            {
+                stack3 = tmp->next;
+                tmp->next = NULL;
+            }
+        }
+        else if (i % 2 == 0)
+        {
+            node *upper = findLastCard(stack3);
+            tmp = findSecondLast(stack2);
+            if (tmp->next == NULL)
+            {
+                upper->next = tmp;
+                upper->next->next = stack1;
+                break;
+            }
+            else
+            {
+                upper->next = tmp->next;
+                tmp->next = NULL;
+            }
+        }
+        else
+        {
+            node *upper = findLastCard(stack3);
+            tmp = findSecondLast(stack1);
+            if (tmp->next == NULL)
+            {
+                upper->next = tmp;
+                upper->next->next = stack2;
+                break;
+            }
+            else
+            {
+                upper->next = tmp->next;
+                tmp->next = NULL;
+            }
+        }
+    }
+    return stack3;
+}
+
+node *randomShuffleCards(node *head)
+{
+    node *newHead = NULL;
+    node *tmp = head;
+    int i = 0; // Number of nodes in shuffled deck
+    while (head != NULL)
+    {
+        if (i == 0)
+        {
+            newHead = tmp;
+            newHead->next = NULL;
+        }
+
+        i++;
     }
 }
 
@@ -363,45 +525,119 @@ void playGame(node *head)
     char message[100];
 }
 
+void getInput(char *input, char *command, char *arg, int size)
+{
+
+    fgets(input, size, stdin);
+
+    // Split input and filename
+    for (int i = 0; i < 2; i++)
+    {
+        command[i] = input[i];
+    }
+
+    for (int i = 0; i < 40; i++)
+    {
+        int j = i + 3; // Skip space
+        if (input[j] == '\n')
+        {
+            break;
+        }
+        arg[i] = input[j];
+    }
+}
+
+/// @brief
+/// @param cards
+/// @param lastCommand
+/// @param message
+/// @param showCards 0 false, 1 true
+void printBoard(node *cards, char *lastCommand, char *message, int showCards)
+{
+    printHeader();
+    if (cards == NULL)
+    {
+        printEmptyTable();
+    }
+    else
+    {
+        printDeck(cards, showCards);
+    }
+
+    printFooter(lastCommand, message);
+}
+
 // https://stackoverflow.com/questions/30678905/what-is-the-proper-equivalent-of-whiletrue-in-plain-c
 #define EVER \
     ;        \
     ;
 int main()
 {
-
-    char *lastInput = "";
+    // Seed for random function
+    srand(time(NULL));
+    char *lastCommand = "";
     char *message = (char *)malloc(256);
+    sprintf(message, "");
 
-    // First prompt
-    printHeader();
-    printEmptyTable();
-    printFooter(lastInput, message);
-    char input[3];
-    scanf("%s", input);
-    lastInput = input;
+    // First print
+    printBoard(NULL, lastCommand, message, 0);
 
+    // Input
+    char input[50];
+    char command[3];
+    char arg[47];
+
+    getInput(input, command, arg, sizeof(input));
+    lastCommand = command;
+
+    node *cards = NULL;
     // Funny bit of code - equivalent of while(true)
     for (EVER)
     {
-        node *cards;
-        if (strcmp(input, "ld") == 0)
+        if (strcmp(command, "ld") == 0)
         {
-            cards = getCards("cards.txt", message);
+            cards = getCards(arg, message);
         }
-        printHeader();
-        if (cards != NULL)
+        else if (strcmp(command, "sw") == 0)
         {
-            printDeck(cards);
-            message = "Ok";
+            if (cards != NULL)
+            {
+                int split;
+                sscanf(arg, "%d", &split);
+                cards = splitShuffleCards(cards, split);
+                message = "Ok";
+            }
+            else
+            {
+                message = "No cards loaded";
+            }
+        }
+        else if (strcmp(command, "si") == 0)
+        {
+            // Not implemented
+        }
+        else if (strcmp(command, "sr") == 0)
+        {
+            // Not implemented
+        }
+        else if (strcmp(command, "sd") == 0)
+        {
+            // Not implemented
+        }
+        else if (strcmp(command, "qq") == 0)
+        {
+            printf("GG, Loser");
+            return 0;
         }
         else
         {
-            printEmptyTable();
+            // Unknown command
+            lastCommand = command;
+            message = "Unknown command";
         }
-        printFooter(lastInput, message);
 
-        scanf("%s", input);
+        printBoard(cards, lastCommand, message, 1);
+        getInput(input, command, arg, sizeof(input));
     }
     return 0;
 }
