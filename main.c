@@ -700,7 +700,7 @@ int main()
             message = "Unknown command";
         }
 
-        printBoard(cards, lastCommand, message, 1);
+        printBoard(cards, lastCommand, message, showCards);
         getInput(input, command, arg, sizeof(input));
         showCards = 0;
     }
