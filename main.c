@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+// https://stackoverflow.com/questions/30678905/what-is-the-proper-equivalent-of-whiletrue-in-plain-c
+// Used for while(true) equivilent
+#define EVER \
+    ;        \
+    ;
 
 typedef struct card
 {
@@ -13,12 +20,6 @@ typedef struct node
     card card;
     struct node *next;
 } node;
-
-typedef struct column
-{
-    char name[3];
-    node *head;
-} column;
 
 char findSuit(int i)
 {
@@ -74,7 +75,8 @@ char findCardNo(int i)
     return -1;
 }
 
-// Initialize a new deck of unshuffled cards
+/// @brief
+/// @return head of the newly initialized cards
 node *initializeCards()
 {
     node *head = NULL;
@@ -114,14 +116,18 @@ node *initializeCards()
     return head;
 }
 
-// Check if loaded cards contains dublicates
+/// @brief Check if loaded cards contains dublicates
+/// @param head
+/// @return 0 if no errors are found or line number of found error.
 int checkDuplicates(node *head)
 {
-    int outerLine = 1;
+    int outerLine = 1; // Represents the card that is checked
     while (head->next != NULL)
     {
         node *next = head->next;
-        int line = outerLine + 1;
+        int line = outerLine + 1; // Represents the following cards
+
+        // Check for each following card that it is not a duplicate
         while (next->next != NULL)
         {
             card headCard = head->card;
@@ -139,7 +145,9 @@ int checkDuplicates(node *head)
     return 0;
 }
 
-// Check if there is a missing card in the deck
+/// @brief checks for missing cards
+/// @param head
+/// @return missing card or 0 if none are missing
 card *checkForMissingCards(node *head)
 {
     int line = 1;
@@ -181,7 +189,9 @@ card *checkForMissingCards(node *head)
     return NULL;
 }
 
-// Check if all cards have valid number and suit
+/// @brief Check if all cards have valid number and suit
+/// @param head
+/// @return line with the invalid card
 int checkValidityOfCards(node *head)
 {
     node *node = head;
@@ -297,6 +307,7 @@ node *getCards(char *filename, char *message)
     if (strcmp(filename, "") == 0)
     {
         // Create new deck of cards
+        sprintf(message, "OK");
         return initializeCards();
     }
 
@@ -335,7 +346,7 @@ node *getCards(char *filename, char *message)
 
     sprintf(message, "OK");
     return head;
-// Return line with error if there is an error
+// Return null if there is an error
 error:
     return NULL;
 }
@@ -366,7 +377,7 @@ void printHeader()
 {
     printf("\n\n");
     printf("C1\tC2\tC3\tC4\tC5\tC6\tC7");
-    printf("\n");
+    printf("\n\n");
 }
 
 void printFooter(char *lastInput, char *message)
@@ -414,7 +425,10 @@ void printDeck(node *head, int showCards)
     }
 }
 
-// Not too pretty, but works
+/// @brief Not too pretty, but works
+/// @param head
+/// @param split
+/// @return
 node *splitShuffleCards(node *head, int split)
 {
     // Random split
@@ -573,13 +587,6 @@ node *randomShuffleCards(node *head)
     return shuffledDeck;
 }
 
-void playGame(node *head)
-{
-    node *cards;
-    char lastCommand[2];
-    char message[100];
-}
-
 void getInput(char *input, char *command, char *arg, int size)
 {
 
@@ -622,16 +629,247 @@ void printBoard(node *cards, char *lastCommand, char *message, int showCards)
     printFooter(lastCommand, message);
 }
 
-// https://stackoverflow.com/questions/30678905/what-is-the-proper-equivalent-of-whiletrue-in-plain-c
-#define EVER \
-    ;        \
-    ;
+void addToColumn(node **col, node *card)
+{
+    if (*col == NULL)
+    {
+        // col = (node *)malloc(sizeof(node));
+        *col = card;
+        (*col)->next = NULL;
+    }
+    else
+    {
+        node *last = findLastCard(*col);
+        last->next = card;
+        card->next = NULL;
+    }
+}
+
+void printPlayingBoard(node *c1, node *c2, node *c3, node *c4, node *c5, node *c6, node *c7, node *f1, node *f2, node *f3, node *f4, char *lastInput, char *message)
+{
+    printHeader();
+
+    int showCards = 1;
+    int rowNum = 0;
+    int k = 1;
+
+    for (EVER)
+    {
+        if (c1 == NULL && c2 == NULL && c3 == NULL && c4 == NULL && c5 == NULL && c6 == NULL && c7 == NULL && rowNum > 7)
+        {
+            break;
+        }
+        // 8 columns when we include foundations
+        for (int i = 0; i < 8; i++)
+        {
+            if (i == 0)
+            {
+                if (c1 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c1->card.num, c1->card.suit);
+                    c1 = c1->next;
+                }
+            }
+            else if (i == 1)
+            {
+                if (c2 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c2->card.num, c2->card.suit);
+                    c2 = c2->next;
+                }
+            }
+            else if (i == 2)
+            {
+                if (c3 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c3->card.num, c3->card.suit);
+                    c3 = c3->next;
+                }
+            }
+            else if (i == 3)
+            {
+                if (c4 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c4->card.num, c4->card.suit);
+                    c4 = c4->next;
+                }
+            }
+            else if (i == 4)
+            {
+                if (c5 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c5->card.num, c5->card.suit);
+                    c5 = c5->next;
+                }
+            }
+            else if (i == 5)
+            {
+                if (c6 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c6->card.num, c6->card.suit);
+                    c6 = c6->next;
+                }
+            }
+            else if (i == 6)
+            {
+                if (c7 == NULL)
+                {
+                    printf("  \t");
+                }
+                else
+                {
+                    printf("%c%c\t", c7->card.num, c7->card.suit);
+                    c7 = c7->next;
+                }
+            }
+            else if (i == 7)
+            {
+                if (rowNum == 0)
+                {
+                    printf("\t%s\t%c%d", "[]", 'F', 1);
+                }
+                else if (rowNum == 2)
+                {
+                    printf("\t%s\t%c%d", "[]", 'F', 2);
+                }
+                else if (rowNum == 4)
+                {
+                    printf("\t%s\t%c%d", "[]", 'F', 3);
+                }
+                else if (rowNum == 6)
+                {
+                    printf("\t%s\t%c%d", "[]", 'F', 4);
+                }
+            }
+        }
+        printf("\n");
+        rowNum++;
+    }
+    printFooter(lastInput, message);
+}
+
+void addCardsToColumn(node *cards, node **c1, node **c2, node **c3, node **c4, node **c5, node **c6, node **c7)
+{
+    /* Indicates number of cards in each column
+     * to ensure I get the right amount of cards
+     * in each
+     */
+    int j = 1;
+    while (cards != NULL)
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            node *c = cards;
+            if (cards == NULL)
+            {
+                break;
+            }
+            if (i == 0 && j < 2)
+            {
+                // First card
+                cards = cards->next; // Point to next card when we have found column to put card on.
+                addToColumn(c1, c);
+            }
+            else if (i == 1 && j < 7)
+            {
+                cards = cards->next;
+                addToColumn(c2, c);
+            }
+            else if (i == 2 && j < 8)
+            {
+                cards = cards->next;
+                addToColumn(c3, c);
+            }
+            else if (i == 3 && j < 9)
+            {
+                cards = cards->next;
+                addToColumn(c4, c);
+            }
+            else if (i == 4 && j < 10)
+            {
+                cards = cards->next;
+                addToColumn(c5, c);
+            }
+            else if (i == 5 && j < 11)
+            {
+                cards = cards->next;
+                addToColumn(c6, c);
+            }
+            else if (i == 6)
+            {
+                cards = cards->next;
+                addToColumn(c7, c);
+                j++; // Increment j when all columns has gotten a card
+            }
+        }
+    }
+}
+
+char *playGame(node *head, char *lastInput, char *message)
+{
+    node *c1 = NULL;
+    node *c2 = NULL;
+    node *c3 = NULL;
+    node *c4 = NULL;
+    node *c5 = NULL;
+    node *c6 = NULL;
+    node *c7 = NULL;
+
+    node *f1 = NULL;
+    node *f2 = NULL;
+    node *f3 = NULL;
+    node *f4 = NULL;
+
+    addCardsToColumn(head, &c1, &c2, &c3, &c4, &c5, &c6, &c7);
+
+    for (EVER)
+    {
+        printPlayingBoard(c1, c2, c3, c4, c5, c6, c7, f1, f2, f3, f4, lastInput, message);
+        char input[50];
+        char command[3];
+        char arg[47];
+
+        getInput(input, command, arg, sizeof(input));
+
+        if (strcmp(command, "qq") == 0)
+        {
+            sprintf(lastInput, "%s", command);
+            return 0;
+        }
+    }
+}
+
 int main()
 {
     // Seed for random function
     srand(time(NULL)); // Used for seeding rand()
-    char *lastCommand = "";
+    char *lastCommand = (char *)malloc(256);
     char *message = (char *)malloc(256);
+    sprintf(lastCommand, "");
     sprintf(message, "");
 
     // First print
@@ -643,13 +881,14 @@ int main()
     char arg[47];
 
     getInput(input, command, arg, sizeof(input));
-    lastCommand = command;
+    sprintf(lastCommand, command);
     int showCards = 0;
 
     node *cards = NULL;
     // Funny bit of code - equivalent of while(true)
     for (EVER)
     {
+        sprintf(lastCommand, "%s", command);
         if (strcmp(command, "ld") == 0)
         {
             cards = getCards(arg, message);
@@ -693,13 +932,23 @@ int main()
             printf("GG, Loser");
             return 0;
         }
+        else if (strcmp(command, "pl") == 0)
+        {
+            if (cards == NULL)
+            {
+                sprintf(message, "Cards not initialized");
+            }
+            else
+            {
+                playGame(cards, lastCommand, message);
+            }
+        }
         else
         {
             // Unknown command
             lastCommand = command;
             message = "Unknown command";
         }
-
         printBoard(cards, lastCommand, message, showCards);
         getInput(input, command, arg, sizeof(input));
         showCards = 0;
